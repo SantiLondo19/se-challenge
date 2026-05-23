@@ -4,18 +4,17 @@
 #   _REGION         GCP region (e.g. us-central1)
 #   _AR_REPO        Artifact Registry repo name (e.g. containers)
 #   _SERVICE        Cloud Run service name
-#   _SQL_INSTANCE   Cloud SQL instance connection name PROJECT:REGION:NAME
 #   _SA             Runtime service account email
 #
 # Required Secret Manager entries:
-#   database-url    Full asyncpg DSN with ?host=/cloudsql/PROJECT:REGION:INSTANCE
-#   jwt-secret      Long random string for JWT signing
+#   database-url               Full asyncpg DSN (Neon: postgresql+asyncpg://...?ssl=require)
+#   jwt-secret                 Long random string for JWT signing
+#   bootstrap-admin-password   Initial admin password
 
 substitutions:
   _REGION: us-central1
   _AR_REPO: containers
   _SERVICE: se-challenge-api
-  _SQL_INSTANCE: ${PROJECT_ID}:us-central1:se-challenge-pg
   _SA: run-sa@${PROJECT_ID}.iam.gserviceaccount.com
 
 options:
@@ -70,7 +69,6 @@ steps:
             --image="$IMAGE" \
             --region=${_REGION} \
             --command="alembic" --args="upgrade,head" \
-            --set-cloudsql-instances=${_SQL_INSTANCE} \
             --set-secrets=DATABASE_URL=database-url:latest,JWT_SECRET=jwt-secret:latest \
             --service-account=${_SA}
         else
@@ -78,7 +76,6 @@ steps:
             --image="$IMAGE" \
             --region=${_REGION} \
             --command="alembic" --args="upgrade,head" \
-            --set-cloudsql-instances=${_SQL_INSTANCE} \
             --set-secrets=DATABASE_URL=database-url:latest,JWT_SECRET=jwt-secret:latest \
             --service-account=${_SA}
         fi
@@ -96,9 +93,8 @@ steps:
       - --region=${_REGION}
       - --platform=managed
       - --allow-unauthenticated
-      - --add-cloudsql-instances=${_SQL_INSTANCE}
-      - --set-secrets=DATABASE_URL=database-url:latest,JWT_SECRET=jwt-secret:latest
-      - --set-env-vars=ENV=production,LOG_LEVEL=INFO,ALLOW_SELF_REGISTER=false
+      - --set-secrets=DATABASE_URL=database-url:latest,JWT_SECRET=jwt-secret:latest,BOOTSTRAP_ADMIN_PASSWORD=bootstrap-admin-password:latest
+      - --set-env-vars=ENV=production,LOG_LEVEL=INFO,ALLOW_SELF_REGISTER=false,BOOTSTRAP_ADMIN_USERNAME=admin,BOOTSTRAP_ADMIN_EMAIL=admin@example.com
       - --service-account=${_SA}
       - --cpu=1
       - --memory=512Mi

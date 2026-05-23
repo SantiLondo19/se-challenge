@@ -17,6 +17,7 @@ from app.core.config import settings
 from app.core.logging import configure_logging, get_logger
 from app.core.middleware import install_middleware
 from app.core.rate_limit import limiter
+from app.db.bootstrap import ensure_admin
 from app.db.session import dispose_engine
 
 
@@ -71,6 +72,11 @@ async def _lifespan(_: FastAPI) -> AsyncIterator[None]:
     configure_logging()
     logger = get_logger("app.lifespan")
     logger.info("startup", env=settings.env)
+    try:
+        await ensure_admin()
+    except Exception as exc:  # pragma: no cover
+        # Never block boot on a transient seed failure; surface in logs for ops.
+        logger.error("bootstrap_admin_failed", error=str(exc))
     try:
         yield
     finally:
