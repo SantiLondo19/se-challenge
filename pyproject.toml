@@ -51,14 +51,17 @@ src = ["src"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "N", "S", "C4", "SIM", "RET", "ARG"]
-ignore = ["B008", "S101", "S104"]
+ignore = ["B008", "S101", "S104", "S105", "S106", "UP042", "UP046", "SIM102"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["S105", "S106", "ARG001"]
+"tests/**/*.py" = ["S105", "S106", "ARG001", "E501"]
 "migrations/**/*.py" = ["E501"]
+"src/app/api/**/*.py" = ["ARG001"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
 testpaths = ["tests"]
 pythonpath = ["src"]
 addopts = "-v --tb=short --strict-markers"

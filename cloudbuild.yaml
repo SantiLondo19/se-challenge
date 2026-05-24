@@ -15,6 +15,7 @@ substitutions:
   _REGION: us-central1
   _AR_REPO: containers
   _SERVICE: se-challenge-api
+  _SQL_INSTANCE: ${PROJECT_ID}:us-central1:se-challenge-pg
   _SA: run-sa@${PROJECT_ID}.iam.gserviceaccount.com
 
 options:
@@ -62,20 +63,21 @@ steps:
       - -c
       - |
         set -euo pipefail
-        IMAGE="${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE}:${SHORT_SHA}"
-        # Create-or-update the job, then execute it.
+        IMAGE_URI="${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE}:${SHORT_SHA}"
         if gcloud run jobs describe ${_SERVICE}-migrate --region=${_REGION} >/dev/null 2>&1; then
           gcloud run jobs update ${_SERVICE}-migrate \
-            --image="$IMAGE" \
+            --image="$$IMAGE_URI" \
             --region=${_REGION} \
             --command="alembic" --args="upgrade,head" \
+            --set-cloudsql-instances=${_SQL_INSTANCE} \
             --set-secrets=DATABASE_URL=database-url:latest,JWT_SECRET=jwt-secret:latest \
             --service-account=${_SA}
         else
           gcloud run jobs create ${_SERVICE}-migrate \
-            --image="$IMAGE" \
+            --image="$$IMAGE_URI" \
             --region=${_REGION} \
             --command="alembic" --args="upgrade,head" \
+            --set-cloudsql-instances=${_SQL_INSTANCE} \
             --set-secrets=DATABASE_URL=database-url:latest,JWT_SECRET=jwt-secret:latest \
             --service-account=${_SA}
         fi
@@ -93,6 +95,7 @@ steps:
       - --region=${_REGION}
       - --platform=managed
       - --allow-unauthenticated
+      - --add-cloudsql-instances=${_SQL_INSTANCE}
       - --set-secrets=DATABASE_URL=database-url:latest,JWT_SECRET=jwt-secret:latest,BOOTSTRAP_ADMIN_PASSWORD=bootstrap-admin-password:latest
       - --set-env-vars=ENV=production,LOG_LEVEL=INFO,ALLOW_SELF_REGISTER=false,BOOTSTRAP_ADMIN_USERNAME=admin,BOOTSTRAP_ADMIN_EMAIL=admin@example.com
       - --service-account=${_SA}

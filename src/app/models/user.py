@@ -4,7 +4,8 @@ from __future__ import annotations
 import enum
 from uuid import UUID, uuid4
 
-from sqlalchemy import Boolean, Enum as SAEnum, Index, String
+from sqlalchemy import Boolean, Index, String
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -31,7 +32,13 @@ class User(Base, TimestampMixin):
     last_name: Mapped[str] = mapped_column(String(100), nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[UserRole] = mapped_column(
-        SAEnum(UserRole, name="user_role", native_enum=True, validate_strings=True),
+        SAEnum(
+            UserRole,
+            name="user_role",
+            native_enum=True,
+            validate_strings=True,
+            values_callable=lambda e: [m.value for m in e],
+        ),
         nullable=False,
         default=UserRole.USER,
     )

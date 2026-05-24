@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from app.core.exceptions import AuthError
-from app.core.security import create_refresh_token, hash_password
+from app.core.security import create_refresh_token
 from app.models.user import UserRole
 from app.services.auth_service import AuthService
 from tests.factories import make_user

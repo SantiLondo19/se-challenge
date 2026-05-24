@@ -63,7 +63,7 @@ async def pg_url() -> AsyncIterator[str]:
 
 
 @pytest_asyncio.fixture(scope="session")
-async def engine(pg_url: str) -> AsyncIterator["AsyncEngine"]:
+async def engine(pg_url: str) -> AsyncIterator[AsyncEngine]:
     os.environ["DATABASE_URL"] = pg_url
     os.environ["JWT_SECRET"] = "test-secret-key-must-be-long-enough"
     os.environ["ENV"] = "test"
@@ -93,7 +93,7 @@ async def engine(pg_url: str) -> AsyncIterator["AsyncEngine"]:
 
 
 @pytest_asyncio.fixture
-async def db_session(engine: "AsyncEngine") -> AsyncIterator["AsyncSession"]:
+async def db_session(engine: AsyncEngine) -> AsyncIterator[AsyncSession]:
     """Per-test session with rollback isolation."""
     from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -112,7 +112,7 @@ async def db_session(engine: "AsyncEngine") -> AsyncIterator["AsyncSession"]:
 
 
 @pytest_asyncio.fixture
-async def app(db_session: "AsyncSession") -> "FastAPI":
+async def app(db_session: AsyncSession) -> FastAPI:
     from app.db.session import get_session
     from app.factory import create_app
 
@@ -126,7 +126,7 @@ async def app(db_session: "AsyncSession") -> "FastAPI":
 
 
 @pytest_asyncio.fixture
-async def client(app: "FastAPI") -> AsyncIterator["AsyncClient"]:
+async def client(app: FastAPI) -> AsyncIterator[AsyncClient]:
     from httpx import ASGITransport, AsyncClient
 
     transport = ASGITransport(app=app)
@@ -137,10 +137,10 @@ async def client(app: "FastAPI") -> AsyncIterator["AsyncClient"]:
 # ---------- Domain fixtures ----------
 
 @pytest_asyncio.fixture
-async def admin_user(db_session: "AsyncSession") -> "User":
+async def admin_user(db_session: AsyncSession) -> User:
     from tests.factories import make_user
 
-    user = make_user(role="admin", username="admin_test", email="admin@test.local")
+    user = make_user(role="admin", username="admin_test", email="admin@example.com")
     db_session.add(user)
     await db_session.commit()
     await db_session.refresh(user)
@@ -148,10 +148,10 @@ async def admin_user(db_session: "AsyncSession") -> "User":
 
 
 @pytest_asyncio.fixture
-async def regular_user(db_session: "AsyncSession") -> "User":
+async def regular_user(db_session: AsyncSession) -> User:
     from tests.factories import make_user
 
-    user = make_user(role="user", username="user_test", email="user@test.local")
+    user = make_user(role="user", username="user_test", email="user@example.com")
     db_session.add(user)
     await db_session.commit()
     await db_session.refresh(user)
@@ -159,17 +159,17 @@ async def regular_user(db_session: "AsyncSession") -> "User":
 
 
 @pytest_asyncio.fixture
-async def guest_user(db_session: "AsyncSession") -> "User":
+async def guest_user(db_session: AsyncSession) -> User:
     from tests.factories import make_user
 
-    user = make_user(role="guest", username="guest_test", email="guest@test.local")
+    user = make_user(role="guest", username="guest_test", email="guest@example.com")
     db_session.add(user)
     await db_session.commit()
     await db_session.refresh(user)
     return user
 
 
-def _auth_headers(user: "User") -> dict[str, str]:
+def _auth_headers(user: User) -> dict[str, str]:
     from app.core.security import create_access_token
 
     token = create_access_token(str(user.id), user.role.value)
@@ -177,15 +177,15 @@ def _auth_headers(user: "User") -> dict[str, str]:
 
 
 @pytest.fixture
-def admin_headers(admin_user: "User") -> dict[str, str]:
+def admin_headers(admin_user: User) -> dict[str, str]:
     return _auth_headers(admin_user)
 
 
 @pytest.fixture
-def user_headers(regular_user: "User") -> dict[str, str]:
+def user_headers(regular_user: User) -> dict[str, str]:
     return _auth_headers(regular_user)
 
 
 @pytest.fixture
-def guest_headers(guest_user: "User") -> dict[str, str]:
+def guest_headers(guest_user: User) -> dict[str, str]:
     return _auth_headers(guest_user)

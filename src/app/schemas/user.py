@@ -64,4 +64,6 @@ class UserFilter(BaseModel):
     size: int = Field(default=20, ge=1, le=100)
     role: UserRole | None = None
     active: bool | None = None
-    search: str | None = Field(default=None, max_length=100, description="Match username/email/name")
+    search: str | None = Field(
+        default=None, max_length=100, description="Match username/email/name"
+    )

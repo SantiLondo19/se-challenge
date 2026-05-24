@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from starlette.requests import Request
 
 
-def _key(request: "Request") -> str:
+def _key(request: Request) -> str:
     user_id = getattr(request.state, "user_id", None)
     if user_id:
         return f"user:{user_id}"

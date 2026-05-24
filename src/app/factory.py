@@ -20,7 +20,6 @@ from app.core.rate_limit import limiter
 from app.db.bootstrap import ensure_admin
 from app.db.session import dispose_engine
 
-
 API_DESCRIPTION = """
 REST API for user management built with **FastAPI + SQLAlchemy 2.0 async + PostgreSQL**.
 
@@ -136,6 +135,13 @@ def _custom_openapi(app: FastAPI) -> Any:
 
 
 def create_app() -> FastAPI:
+    # Re-read settings here (rather than relying on the module-level `settings`
+    # binding above) so tests that reset the cache via `get_settings.cache_clear()`
+    # see their overrides.
+    from app.core.config import get_settings
+
+    runtime_settings = get_settings()
+
     configure_logging()
     app = FastAPI(
         title="User Management API",
@@ -157,9 +163,12 @@ def create_app() -> FastAPI:
         license_info={"name": "MIT", "url": "https://opensource.org/license/mit/"},
     )
 
-    # Rate limiter wiring
+    # Rate limiter wiring. Skip the middleware in the test env: SlowAPI builds
+    # on Starlette's BaseHTTPMiddleware which spawns sub-tasks via anyio and
+    # corrupts the asyncpg connection's event-loop binding across pytest cases.
     app.state.limiter = limiter
-    app.add_middleware(SlowAPIMiddleware)
+    if runtime_settings.env != "test":
+        app.add_middleware(SlowAPIMiddleware)
     app.add_exception_handler(RateLimitExceeded, _rate_limit_handler)
 
     install_middleware(app)

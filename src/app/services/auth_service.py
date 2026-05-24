@@ -10,6 +10,7 @@ from app.core.security import (
     create_access_token,
     create_refresh_token,
     decode_token,
+    hash_password,
     verify_password,
 )
 from app.models.user import User
@@ -17,6 +18,10 @@ from app.repositories.user_repository import UserRepository
 from app.schemas.auth import TokenPair
 
 _logger = get_logger("service.auth")
+
+# Pre-computed bcrypt hash used to keep authenticate() timing roughly constant
+# against username enumeration when the user lookup misses.
+_DUMMY_HASH = hash_password("__missing_user_dummy__")
 
 
 class AuthService:
@@ -26,8 +31,7 @@ class AuthService:
     async def authenticate(self, username: str, password: str) -> User:
         user = await self.repo.get_by_username(username)
         if user is None:
-            # Hash a dummy to keep timing roughly constant against username enumeration.
-            verify_password(password, "$2b$12$abcdefghijklmnopqrstuv")
+            verify_password(password, _DUMMY_HASH)
             raise AuthError("Invalid credentials")
         if not verify_password(password, user.password_hash):
             raise AuthError("Invalid credentials")

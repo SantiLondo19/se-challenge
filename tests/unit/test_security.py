@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import time
-from datetime import timedelta
 from unittest.mock import patch
 
 import pytest
@@ -15,7 +14,6 @@ from app.core.security import (
     hash_password,
     verify_password,
 )
-
 
 pytestmark = pytest.mark.unit
 
@@ -64,11 +62,10 @@ def test_decode_rejects_expired_token():
         token = create_access_token("u", "user")
     # Sleep a tick so exp is in the past
     time.sleep(1)
-    with pytest.raises(AuthError):
-        with patch("app.core.security.settings") as mock_settings:
-            mock_settings.jwt_secret.get_secret_value.return_value = "test-secret"
-            mock_settings.jwt_algorithm = "HS256"
-            decode_token(token, expected_type="access")
+    with pytest.raises(AuthError), patch("app.core.security.settings") as mock_settings:
+        mock_settings.jwt_secret.get_secret_value.return_value = "test-secret"
+        mock_settings.jwt_algorithm = "HS256"
+        decode_token(token, expected_type="access")
 
 
 def test_decode_rejects_garbage():
