@@ -15,8 +15,7 @@ substitutions:
   _REGION: us-central1
   _AR_REPO: containers
   _SERVICE: se-challenge-api
-  _SQL_INSTANCE: ${PROJECT_ID}:us-central1:se-challenge-pg
-  _SA: run-sa@${PROJECT_ID}.iam.gserviceaccount.com
+  _SQL_INSTANCE_NAME: se-challenge-pg
 
 options:
   logging: CLOUD_LOGGING_ONLY
@@ -69,17 +68,17 @@ steps:
             --image="$$IMAGE_URI" \
             --region=${_REGION} \
             --command="alembic" --args="upgrade,head" \
-            --set-cloudsql-instances=${_SQL_INSTANCE} \
+            --set-cloudsql-instances=${PROJECT_ID}:${_REGION}:${_SQL_INSTANCE_NAME} \
             --set-secrets=DATABASE_URL=database-url:latest,JWT_SECRET=jwt-secret:latest \
-            --service-account=${_SA}
+            --service-account=run-sa@${PROJECT_ID}.iam.gserviceaccount.com
         else
           gcloud run jobs create ${_SERVICE}-migrate \
             --image="$$IMAGE_URI" \
             --region=${_REGION} \
             --command="alembic" --args="upgrade,head" \
-            --set-cloudsql-instances=${_SQL_INSTANCE} \
+            --set-cloudsql-instances=${PROJECT_ID}:${_REGION}:${_SQL_INSTANCE_NAME} \
             --set-secrets=DATABASE_URL=database-url:latest,JWT_SECRET=jwt-secret:latest \
-            --service-account=${_SA}
+            --service-account=run-sa@${PROJECT_ID}.iam.gserviceaccount.com
         fi
         gcloud run jobs execute ${_SERVICE}-migrate --region=${_REGION} --wait
 
@@ -95,10 +94,10 @@ steps:
       - --region=${_REGION}
       - --platform=managed
       - --allow-unauthenticated
-      - --add-cloudsql-instances=${_SQL_INSTANCE}
+      - --add-cloudsql-instances=${PROJECT_ID}:${_REGION}:${_SQL_INSTANCE_NAME}
       - --set-secrets=DATABASE_URL=database-url:latest,JWT_SECRET=jwt-secret:latest,BOOTSTRAP_ADMIN_PASSWORD=bootstrap-admin-password:latest
       - --set-env-vars=ENV=production,LOG_LEVEL=INFO,ALLOW_SELF_REGISTER=false,BOOTSTRAP_ADMIN_USERNAME=admin,BOOTSTRAP_ADMIN_EMAIL=admin@example.com
-      - --service-account=${_SA}
+      - --service-account=run-sa@${PROJECT_ID}.iam.gserviceaccount.com
       - --cpu=1
       - --memory=512Mi
       - --min-instances=0
