@@ -4,6 +4,15 @@ REST API for user management built with **FastAPI + SQLAlchemy 2.0 async + Postg
 
 Submission for the Advana Software Engineer Challenge.
 
+## Live deployment
+
+- **API base URL:** https://se-challenge-api-e3lp23jf5a-uc.a.run.app
+- **Swagger UI:** https://se-challenge-api-e3lp23jf5a-uc.a.run.app/docs
+- **ReDoc:** https://se-challenge-api-e3lp23jf5a-uc.a.run.app/redoc
+- **OpenAPI JSON:** https://se-challenge-api-e3lp23jf5a-uc.a.run.app/openapi.json
+
+The Swagger UI page has a working `Authorize` button — log in once with the bootstrap admin (credentials are provided to the reviewer out of band) and every protected endpoint becomes interactively testable from the browser.
+
 ---
 
 ## Highlights
